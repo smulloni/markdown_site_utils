@@ -57,6 +57,8 @@ def parse_file(file_path):
         extras=['markdown-in-html', 'smarty-pants']))
     return data, html
 
+class PathConflict(ValueError): pass
+
 # TODO: support hierarchically inherited data,
 # declared in separate yml, toml, or json files.
 # Also, more than one block of content per file,
@@ -72,7 +74,13 @@ class DB(object):
             path = path[1:]
         file_path = os.path.join(self.data_dir, path)
         if os.path.isdir(file_path):
-            file_path = os.path.join(file_path, 'index.md')
+            if os.path.isfile(file_path + '.md'):
+                raise PathConflict(
+                    "path {} is both a file and a directory".format(path))
+            else:
+                file_path = os.path.join(file_path, 'index.md')
+        else:
+            file_path += '.md'
         data, md_content = parse_file(file_path)
         data['path'] = '/%s' % path
         data['id'] = ('index' if path == ''
