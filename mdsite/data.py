@@ -2,7 +2,7 @@ import datetime
 import os
 import json
 
-from flask import Markup
+from markupsafe import Markup
 import markdown2
 import yaml
 import toml
