@@ -23,3 +23,21 @@ the top, bounded by '+++' lines:
     +++
 
     # Some Markdown
+
+YAML and JSON may also be used. YAML blocks should be start and end with lines
+consisting of three dashes; JSON blocks should consist of a single JSON object
+with opening and closing braces on lines by themselves.
+
+To use the library, you get create an `mdsite.DB` object with the path to your
+data directory:
+
+    mydb = mdsite.DB("/path/to/data/dir")
+
+Then call `get_data(path)` for the path into the directory you want, leaving
+outthe `.md` filename suffix, and, if you are looking for an index file, leaving
+out `index.md`:
+
+    data = mydb.get_data("/node/leaf")
+
+The above gets data for `$DATA_DIR/node/leaf.md`, or for
+`$DATA_DIR/node/leaf/index.md`, if that file exists instead. 
