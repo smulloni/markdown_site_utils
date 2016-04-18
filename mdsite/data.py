@@ -11,7 +11,7 @@ BEGIN_FILE = 0
 IN_DATA = 1
 DATA_DONE = 2
 DATA_SEPS = {
-    '{': ('}', json.loads),
+    '{': ('}', lambda x: json.loads(u'{' + x + u'}')),
     '+++': ('+++', toml.loads),
     '---': ('---', yaml.load),
 }
@@ -49,7 +49,7 @@ def parse_file(file_path):
     if raw_data:
         if not data_parser:
             raise ValueError("malformed input")
-        data = data_parser(''.join(raw_data))
+        data = data_parser(''.join(raw_data).decode('utf-8'))
     else:
         data = {}
     html = Markup(markdown2.markdown(

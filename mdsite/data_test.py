@@ -24,6 +24,10 @@ class DBTests(unittest.TestCase):
         self.assertEquals(result['database']['enabled'], True)
         self.assertEquals(result['database']['connection_max'], 5000)
 
+    def testParseJSON(self):
+        result = self.db.get_data('json')
+        self.assertEquals(result['title'], "Well, Well!")
+
     def testConflict(self):
         with self.assertRaises(PathConflict):
             self.db.get_data("conflict")

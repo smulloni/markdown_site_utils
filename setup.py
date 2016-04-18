@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup
 
 setup(name="Markdown Site Utils",
       version="0.1",
@@ -11,4 +11,5 @@ setup(name="Markdown Site Utils",
       packages=["mdsite"],
       package_dir={'mdsite': 'mdsite'},
       package_data={'mdsite': ['testdata/*.md', 
-                               'testdata/conflict/*.md']})
+                               'testdata/conflict/*.md']},
+      test_suite="mdsite.data_test")
