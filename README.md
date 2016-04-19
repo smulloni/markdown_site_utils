@@ -41,3 +41,7 @@ out `index.md`:
 
 The above gets data for `$DATA_DIR/node/leaf.md`, or for
 `$DATA_DIR/node/leaf/index.md`, if that file exists instead. 
+
+The library also supports hierarchical configuration, also written in TOML,
+YAML, or JSON, stored in files called `config.{toml,yaml,json}` depending on the
+config language employed.
