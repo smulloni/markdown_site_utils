@@ -57,17 +57,38 @@ def parse_file(file_path):
         extras=['markdown-in-html', 'smarty-pants']))
     return data, html
 
+
 class PathConflict(ValueError): pass
 
-# TODO: support hierarchically inherited data,
-# declared in separate yml, toml, or json files.
-# Also, more than one block of content per file,
-# and support for other ways of writing content.
-# Finally, other ways of storing it; serving with
-# a cache; and static site generation.
+CONFIG_FILES = (('config.toml', toml.loads),
+                ('config.yaml', yaml.load),
+                ('config.json', json.loads))
+
+
 class DB(object):
     def __init__(self, data_dir):
         self.data_dir = data_dir
+
+    def get_config(self, path):
+        """Return hierarchically overrideable configuration,
+        stored in config.{toml,yaml,json} files."""
+        def eval_config(directory):
+            for filename, parser in CONFIG_FILES:
+                p = os.path.join(directory, filename)
+                if os.path.exists(p):
+                    return parser(open(p).read())
+            return {}
+
+        d = self.data_dir
+        config = eval_config(d)
+        path_elems = filter(None, path.split(os.path.sep))
+        for elem in path_elems:
+            d = os.path.join(d, elem)
+            if os.path.isdir(d):
+                config.update(eval_config(d))
+            else:
+                break
+        return config
 
     def get_data(self, path):
         if path.startswith('/'):

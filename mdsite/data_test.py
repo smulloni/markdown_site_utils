@@ -32,6 +32,13 @@ class DBTests(unittest.TestCase):
         with self.assertRaises(PathConflict):
             self.db.get_data("conflict")
 
+    def testConfig(self):
+        config = self.db.get_config("/")
+        self.assertEquals(config["template"], "base.tmpl")
+        config = self.db.get_config("/nougat")
+        self.assertEquals(config["template"], "dessert.tmpl")
+        
+
 if __name__ == '__main__':
     unittest.main()
         
