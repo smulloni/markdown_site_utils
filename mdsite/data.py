@@ -21,6 +21,12 @@ def _getmtime(path):
     return datetime.datetime.utcfromtimestamp(mtime)
 
 
+def _getlisting(dir):
+    _, dirs, files = os.walk(dir).next()
+    files = [f[:-3] for f in files if f.endswith('.md')]
+    return dirs, files
+
+
 def parse_file(file_path):
     raw_data = []
     content = []
@@ -94,20 +100,28 @@ class DB(object):
         if path.startswith('/'):
             path = path[1:]
         file_path = os.path.join(self.data_dir, path)
+        listing = []
         if os.path.isdir(file_path):
             if os.path.isfile(file_path + '.md'):
                 raise PathConflict(
                     "path {} is both a file and a directory".format(path))
-            else:
-                file_path = os.path.join(file_path, 'index.md')
+            listing = _getlisting(file_path)
+            mtime = _getmtime(file_path)
+            file_path = os.path.join(file_path, 'index.md')
         else:
             file_path += '.md'
-        data, md_content = parse_file(file_path)
+            mtime = _getmtime(file_path)
+        if (os.path.basename(file_path) == 'index.md' and
+            not os.path.exists(file_path)):
+            data = {'content': ''}
+        else:
+            data, md_content = parse_file(file_path)
+            data['content'] = md_content
+        data['listing'] = listing
+        data['last_mod'] = mtime
         data['path'] = '/%s' % path
         data['id'] = ('index' if path == ''
                       else os.path.basename(path))
-        data['last_mod'] = _getmtime(file_path)
-        data['content'] = md_content
         return data
 
 

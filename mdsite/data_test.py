@@ -37,6 +37,12 @@ class DBTests(unittest.TestCase):
         self.assertEquals(config["template"], "base.tmpl")
         config = self.db.get_config("/nougat")
         self.assertEquals(config["template"], "dessert.tmpl")
+
+    def testListing(self):
+        data = self.db.get_data("/")
+        self.assertEquals(data['listing'],
+                          (['conflict', 'nougat'],
+                           ['conflict', 'json', 'toml', 'yaml']))
         
 
 if __name__ == '__main__':
