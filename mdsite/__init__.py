@@ -1,1 +1,1 @@
-from data import PathConflict, DB
+from mdsite.data import PathConflict, DB

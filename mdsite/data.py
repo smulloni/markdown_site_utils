@@ -1,3 +1,4 @@
+from builtins import object
 import datetime
 import os
 import json
@@ -16,15 +17,23 @@ DATA_SEPS = {
     '---': ('---', yaml.load),
 }
 
+if 'decode' in dir(str):
+    def _utfdecode(s):
+        return s.decode('utf-8')
+else:
+    def _utfdecode(s):
+        return s
+    
+
 def _getmtime(path):
     mtime = os.path.getmtime(path)
     return datetime.datetime.utcfromtimestamp(mtime)
 
 
 def _getlisting(dir):
-    _, dirs, files = os.walk(dir).next()
+    _, dirs, files = next(os.walk(dir))
     files = [f[:-3] for f in files if f.endswith('.md')]
-    return dirs, files
+    return sorted(dirs), sorted(files)
 
 
 def parse_file(file_path):
@@ -55,7 +64,7 @@ def parse_file(file_path):
     if raw_data:
         if not data_parser:
             raise ValueError("malformed input")
-        data = data_parser(''.join(raw_data).decode('utf-8'))
+        data = data_parser(_utfdecode(''.join(raw_data)))
     else:
         data = {}
     html = Markup(markdown2.markdown(
@@ -87,7 +96,7 @@ class DB(object):
 
         d = self.data_dir
         config = eval_config(d)
-        path_elems = filter(None, path.split(os.path.sep))
+        path_elems = [_f for _f in path.split(os.path.sep) if _f]
         for elem in path_elems:
             d = os.path.join(d, elem)
             if os.path.isdir(d):
@@ -110,6 +119,8 @@ class DB(object):
             file_path = os.path.join(file_path, 'index.md')
         else:
             file_path += '.md'
+            if not os.path.exists(file_path):
+                return {}
             mtime = _getmtime(file_path)
         if (os.path.basename(file_path) == 'index.md' and
             not os.path.exists(file_path)):
