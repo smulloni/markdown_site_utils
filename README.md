@@ -24,7 +24,7 @@ the top, bounded by '+++' lines:
 
     # Some Markdown
 
-YAML and JSON may also be used. YAML blocks should be start and end with lines
+YAML and JSON may also be used. YAML blocks should start and end with lines
 consisting of three dashes; JSON blocks should consist of a single JSON object
 with opening and closing braces on lines by themselves.
 
@@ -34,7 +34,7 @@ data directory:
     mydb = mdsite.DB("/path/to/data/dir")
 
 Then call `get_data(path)` for the path into the directory you want, leaving
-outthe `.md` filename suffix, and, if you are looking for an index file, leaving
+out the `.md` filename suffix, and, if you are looking for an index file, leaving
 out `index.md`:
 
     data = mydb.get_data("/node/leaf")
