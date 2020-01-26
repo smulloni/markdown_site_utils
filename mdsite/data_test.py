@@ -4,23 +4,24 @@ import unittest
 
 from mdsite.data import DB, PathConflict
 
+
 class DBTests(unittest.TestCase):
     def setUp(self):
-        self.data_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                     'testdata')
+        self.data_dir = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), 'testdata')
         self.db = DB(self.data_dir)
 
     def testParseTOML(self):
         result = self.db.get_data('toml')
-        self.assertEquals(result['owner']['name'],
-                          'Tom Preston-Werner')
-        self.assertEquals(result['owner']['dob'],
-                          datetime.datetime(1979, 5, 27, 7, 32))
+        self.assertEquals(result['owner']['name'], 'Tom Preston-Werner')
+        self.assertEquals(
+            result['owner']['dob'].isoformat(),
+            datetime.datetime(1979, 5, 27, 7, 32,
+                              tzinfo=datetime.timezone.utc).isoformat())
 
     def testParseYAML(self):
         result = self.db.get_data('yaml')
-        self.assertEquals(result['owner']['name'],
-                          'YAML Guy')
+        self.assertEquals(result['owner']['name'], 'YAML Guy')
         self.assertEquals(result['database']['enabled'], True)
         self.assertEquals(result['database']['connection_max'], 5000)
 
@@ -40,11 +41,10 @@ class DBTests(unittest.TestCase):
 
     def testListing(self):
         data = self.db.get_data("/")
-        self.assertEquals(data['listing'],
-                          (['conflict', 'nougat'],
-                           ['conflict', 'json', 'toml', 'yaml']))
-        
+        self.assertEquals(
+            data['listing'],
+            (['conflict', 'nougat'], ['conflict', 'json', 'toml', 'yaml']))
+
 
 if __name__ == '__main__':
     unittest.main()
-        

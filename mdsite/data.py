@@ -17,13 +17,6 @@ DATA_SEPS = {
     '---': ('---', yaml.load),
 }
 
-if 'decode' in dir(str):
-    def _utfdecode(s):
-        return s.decode('utf-8')
-else:
-    def _utfdecode(s):
-        return s
-    
 
 def _getmtime(path):
     mtime = os.path.getmtime(path)
@@ -64,19 +57,20 @@ def parse_file(file_path):
     if raw_data:
         if not data_parser:
             raise ValueError("malformed input")
-        data = data_parser(_utfdecode(''.join(raw_data)))
+        data = data_parser(''.join(raw_data))
     else:
         data = {}
-    html = Markup(markdown2.markdown(
-        ''.join(content),
-        extras=['markdown-in-html', 'smarty-pants']))
+    html = Markup(
+        markdown2.markdown(''.join(content),
+                           extras=['markdown-in-html', 'smarty-pants']))
     return data, html
 
 
-class PathConflict(ValueError): pass
+class PathConflict(ValueError):
+    pass
 
-CONFIG_FILES = (('config.toml', toml.loads),
-                ('config.yaml', yaml.load),
+
+CONFIG_FILES = (('config.toml', toml.loads), ('config.yaml', yaml.load),
                 ('config.json', json.loads))
 
 
@@ -122,8 +116,8 @@ class DB(object):
             if not os.path.exists(file_path):
                 return {}
             mtime = _getmtime(file_path)
-        if (os.path.basename(file_path) == 'index.md' and
-            not os.path.exists(file_path)):
+        if (os.path.basename(file_path) == 'index.md'
+                and not os.path.exists(file_path)):
             data = {'content': ''}
         else:
             data, md_content = parse_file(file_path)
@@ -131,9 +125,5 @@ class DB(object):
         data['listing'] = listing
         data['last_mod'] = mtime
         data['path'] = '/%s' % path
-        data['id'] = ('index' if path == ''
-                      else os.path.basename(path))
+        data['id'] = ('index' if path == '' else os.path.basename(path))
         return data
-
-
-    
