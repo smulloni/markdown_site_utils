@@ -8,26 +8,29 @@ from mdsite.data import DB, PathConflict
 class DBTests(unittest.TestCase):
     def setUp(self):
         self.data_dir = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), 'testdata')
+            os.path.dirname(os.path.realpath(__file__)), "testdata"
+        )
         self.db = DB(self.data_dir)
 
     def testParseTOML(self):
-        result = self.db.get_data('toml')
-        self.assertEquals(result['owner']['name'], 'Tom Preston-Werner')
-        self.assertEquals(
-            result['owner']['dob'].isoformat(),
-            datetime.datetime(1979, 5, 27, 7, 32,
-                              tzinfo=datetime.timezone.utc).isoformat())
+        result = self.db.get_data("toml")
+        self.assertEqual(result["owner"]["name"], "Tom Preston-Werner")
+        self.assertEqual(
+            result["owner"]["dob"].isoformat(),
+            datetime.datetime(
+                1979, 5, 27, 7, 32, tzinfo=datetime.timezone.utc
+            ).isoformat(),
+        )
 
     def testParseYAML(self):
-        result = self.db.get_data('yaml')
-        self.assertEquals(result['owner']['name'], 'YAML Guy')
-        self.assertEquals(result['database']['enabled'], True)
-        self.assertEquals(result['database']['connection_max'], 5000)
+        result = self.db.get_data("yaml")
+        self.assertEqual(result["owner"]["name"], "YAML Guy")
+        self.assertEqual(result["database"]["enabled"], True)
+        self.assertEqual(result["database"]["connection_max"], 5000)
 
     def testParseJSON(self):
-        result = self.db.get_data('json')
-        self.assertEquals(result['title'], "Well, Well!")
+        result = self.db.get_data("json")
+        self.assertEqual(result["title"], "Well, Well!")
 
     def testConflict(self):
         with self.assertRaises(PathConflict):
@@ -35,16 +38,35 @@ class DBTests(unittest.TestCase):
 
     def testConfig(self):
         config = self.db.get_config("/")
-        self.assertEquals(config["template"], "base.tmpl")
+        self.assertEqual(config["template"], "base.tmpl")
         config = self.db.get_config("/nougat")
-        self.assertEquals(config["template"], "dessert.tmpl")
+        self.assertEqual(config["template"], "dessert.tmpl")
 
     def testListing(self):
         data = self.db.get_data("/")
-        self.assertEquals(
-            data['listing'],
-            (['conflict', 'nougat'], ['conflict', 'json', 'toml', 'yaml']))
+        self.assertEqual(
+            data["listing"],
+            (["conflict", "nougat"], ["conflict", "json", "toml", "yaml"]),
+        )
+
+    def testRecursiveListing(self):
+        listing = self.db.get_recursive_listing("/")
+        self.assertEqual(
+            listing,
+            {
+                "": (
+                    ["conflict", "nougat"],
+                    ["conflict", "json", "toml", "yaml"],
+                ),
+                "conflict": ([], ["index"]),
+                "nougat": ([], []),
+            },
+        )
+
+    def testRecursiveData(self):
+        all_data = self.db.get_recursive_data("/nougat")
+        self.assertEqual(set(all_data), {"nougat"})
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
