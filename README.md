@@ -26,7 +26,8 @@ the top, bounded by '+++' lines:
 
 YAML and JSON may also be used. YAML blocks should start and end with lines
 consisting of three dashes; JSON blocks should consist of a single JSON object
-with opening and closing braces on lines by themselves.
+with opening and closing braces on lines by themselves. The data block is optional
+but if present must begin on the first line of the file.
 
 To use the library, you get create an `mdsite.DB` object with the path to your
 data directory:
