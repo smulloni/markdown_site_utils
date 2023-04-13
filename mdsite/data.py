@@ -12,7 +12,7 @@ BEGIN_FILE = 0
 IN_DATA = 1
 DATA_DONE = 2
 DATA_SEPS = {
-    "{": ("}", lambda x: json.loads(u"{" + x + u"}")),
+    "{": ("}", lambda x: json.loads("{" + x + "}")),
     "+++": ("+++", toml.loads),
     "---": ("---", yaml.safe_load),
 }
@@ -32,16 +32,20 @@ def _getlisting(dir):
 def parse_file(file_path):
     raw_data = []
     content = []
+    raw_lines = []
     state = BEGIN_FILE
     end_sep = None
     data_parser = None
+    seen_sep = False
     with open(file_path) as fp:
         for line in fp:
+            raw_lines.append(line)
             if state == BEGIN_FILE:
                 line = line.strip()
                 if not line:
                     continue
                 if line in DATA_SEPS:
+                    seen_sep = True
                     state = IN_DATA
                     end_sep, data_parser = DATA_SEPS[line]
                     continue
@@ -60,6 +64,9 @@ def parse_file(file_path):
         data = data_parser("".join(raw_data))
     else:
         data = {}
+    if not seen_sep:
+        # no data header; backtrack to use all data without line stripping
+        content = raw_lines
     html = Markup(
         markdown2.markdown(
             "".join(content), extras=["markdown-in-html", "smarty-pants"]
@@ -129,9 +136,7 @@ class DB(object):
             if not os.path.exists(file_path):
                 return {}
             mtime = _getmtime(file_path)
-        if os.path.basename(file_path) == "index.md" and not os.path.exists(
-            file_path
-        ):
+        if os.path.basename(file_path) == "index.md" and not os.path.exists(file_path):
             data = {"content": ""}
         else:
             data, md_content = parse_file(file_path)

@@ -1,4 +1,4 @@
 *.pyc
-Markdown_Site_utils.egg-info/
-dist/
-build/
+.venv
+.pytest_cache
+__pycache__

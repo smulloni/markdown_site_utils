@@ -46,7 +46,7 @@ class DBTests(unittest.TestCase):
         data = self.db.get_data("/")
         self.assertEqual(
             data["listing"],
-            (["conflict", "nougat"], ["conflict", "json", "toml", "yaml"]),
+            (["conflict", "nougat"], ["conflict", "json", "nohead", "toml", "yaml"]),
         )
 
     def testRecursiveListing(self):
@@ -56,7 +56,7 @@ class DBTests(unittest.TestCase):
             {
                 "": (
                     ["conflict", "nougat"],
-                    ["conflict", "json", "toml", "yaml"],
+                    ["conflict", "json", "nohead", "toml", "yaml"],
                 ),
                 "conflict": ([], ["index"]),
                 "nougat": ([], []),
@@ -66,6 +66,11 @@ class DBTests(unittest.TestCase):
     def testRecursiveData(self):
         all_data = self.db.get_recursive_data("/nougat")
         self.assertEqual(set(all_data), {"nougat"})
+
+    def testNoDataHeader(self):
+        data = self.db.get_data("nohead")
+        self.assertTrue(data.get("content", ""))
+        self.assertIn("This markdown file", data.get("content", ""))
 
 
 if __name__ == "__main__":
