@@ -32,26 +32,24 @@ def _getlisting(dir):
 def parse_file(file_path):
     raw_data = []
     content = []
-    raw_lines = []
     state = BEGIN_FILE
     end_sep = None
     data_parser = None
     seen_sep = False
     with open(file_path) as fp:
         for line in fp:
-            raw_lines.append(line)
             if state == BEGIN_FILE:
-                line = line.strip()
-                if not line:
-                    continue
-                if line in DATA_SEPS:
+                stripped = line.strip()
+                if stripped in DATA_SEPS:
                     seen_sep = True
                     state = IN_DATA
-                    end_sep, data_parser = DATA_SEPS[line]
-                    continue
+                    end_sep, data_parser = DATA_SEPS[stripped]
+                else:
+                    state = DATA_DONE
+                    content.append(line)
             elif state == IN_DATA:
                 if line.strip() == end_sep:
-                    state = DATA_DONE
+                    state = DATA_DONE        
                 else:
                     raw_data.append(line)
             elif state == DATA_DONE:
@@ -64,9 +62,6 @@ def parse_file(file_path):
         data = data_parser("".join(raw_data))
     else:
         data = {}
-    if not seen_sep:
-        # no data header; backtrack to use all data without line stripping
-        content = raw_lines
     html = Markup(
         markdown2.markdown(
             "".join(content), extras=["markdown-in-html", "smarty-pants"]

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "markdown-site-utils"
-version = "0.2.1"
+version = "0.2.2"
 description = "Some utilities for managing Markdown files with metadata."
 authors = ["Jacob Smullyan <smulloni@smullyan.org>"]
 readme = "README.md"
