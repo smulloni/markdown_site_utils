@@ -16,7 +16,7 @@ include = [
 python = "^3.11"
 MarkupSafe = "^2.1.2"
 PyYAML = "^6.0"
-markdown2 = "^2.4.8"
+markdown2 = "^2.5.1"
 toml = "^0.10.2"
 
 [tool.poetry.group.dev.dependencies]
