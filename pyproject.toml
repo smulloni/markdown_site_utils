@@ -1,6 +1,6 @@
 [project]
 name = "markdown-site-utils"
-version = "0.2.2"
+version = "0.3.0"
 description = "Some utilities for managing Markdown files with metadata."
 authors = [{ name = "Jacob Smullyan", email = "smulloni@smullyan.org" }]
 readme = "README.md"
