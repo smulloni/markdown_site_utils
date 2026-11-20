@@ -2,7 +2,19 @@
 
 Some utilities for managing Markdown files with metadata.
 
-The notion is that a content-oriented website may be written as a 
+Requires Python 3.11 or later; tested on Python 3.11 through 3.15.
+
+## Installation
+
+    pip install markdown-site-utils
+
+or, in a uv-managed project:
+
+    uv add markdown-site-utils
+
+## Overview
+
+The notion is that a content-oriented website may be written as a
 hierarchical series of Markdown files (with an ".md" extension) underneath
 some data directory, e.g.:
 
@@ -29,7 +41,15 @@ consisting of three dashes; JSON blocks should consist of a single JSON object
 with opening and closing braces on lines by themselves. The data block is optional
 but if present must begin on the first line of the file.
 
-To use the library, you get create an `mdsite.DB` object with the path to your
+TOML is parsed with the standard library's
+[`tomllib`](https://docs.python.org/3/library/tomllib.html), so the TOML syntax
+accepted is whatever your Python version supports (TOML 1.0, plus TOML 1.1 on
+Python 3.15 and later). If you need to support several Python versions, stick
+to TOML 1.0 syntax.
+
+## Usage
+
+To use the library, create an `mdsite.DB` object with the path to your
 data directory:
 
     mydb = mdsite.DB("/path/to/data/dir")
@@ -41,8 +61,52 @@ out `index.md`:
     data = mydb.get_data("/node/leaf")
 
 The above gets data for `$DATA_DIR/node/leaf.md`, or for
-`$DATA_DIR/node/leaf/index.md`, if that file exists instead. 
+`$DATA_DIR/node/leaf/index.md`, if that file exists instead. If both
+`node/leaf.md` and a `node/leaf/` directory exist, `mdsite.PathConflict` is
+raised. If nothing exists at the path, an empty dict is returned.
+
+The returned dict contains the file's metadata, plus these keys:
+
+- `content`: the Markdown rendered to HTML, as a `markupsafe.Markup` string
+- `last_mod`: the modification time of the file (or, for a directory, of the
+  directory itself), as a timezone-aware `datetime` in UTC
+- `path`: the normalized path, with a leading slash
+- `id`: the last component of the path, or `"index"` for the root
+- `listing`: for a directory, a `(subdirectories, pages)` tuple of sorted
+  names; otherwise `None`
+
+`get_recursive_data(path)` returns the data for a directory and every
+directory beneath it, keyed by path relative to the data directory (without a
+leading slash; the root is `""`). It raises `mdsite.PathConflict` if any
+directory in the tree conflicts with a file.
 
 The library also supports hierarchical configuration, also written in TOML,
 YAML, or JSON, stored in files called `config.{toml,yaml,json}` depending on the
-config language employed.
+config language employed. `get_config(path)` merges the configuration found in
+the data directory and each directory along `path`, with deeper files
+overriding shallower ones.
+
+## Upgrading to 0.3.0
+
+- `last_mod` is now a timezone-aware UTC `datetime`. It used to be a naive
+  `datetime` (one with no timezone) holding the UTC time. Comparing it with a
+  naive `datetime` now raises `TypeError`. Compare it with aware datetimes
+  instead, such as `datetime.datetime.now(datetime.UTC)`.
+- TOML is now parsed with `tomllib` instead of the third-party `toml` package.
+  Parse errors are `tomllib.TOMLDecodeError` (still a `ValueError` subclass),
+  and offset datetimes in TOML metadata use `datetime.timezone.utc`.
+
+## Development
+
+The project is managed with [uv](https://docs.astral.sh/uv/) and linted and
+formatted with [ruff](https://docs.astral.sh/ruff/):
+
+    uv sync                    # create the virtualenv and install dependencies
+    uv run pytest              # run the tests
+    uv run ruff check .        # lint
+    uv run ruff format .       # format
+    uv build                   # build the sdist and wheel
+
+To run the tests against a particular Python version:
+
+    uv run --isolated --python 3.15 pytest
