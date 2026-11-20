@@ -17,9 +17,7 @@ class DBTests(unittest.TestCase):
         self.assertEqual(result["owner"]["name"], "Tom Preston-Werner")
         self.assertEqual(
             result["owner"]["dob"].isoformat(),
-            datetime.datetime(
-                1979, 5, 27, 7, 32, tzinfo=datetime.timezone.utc
-            ).isoformat(),
+            datetime.datetime(1979, 5, 27, 7, 32, tzinfo=datetime.UTC).isoformat(),
         )
 
     def testParseYAML(self):
@@ -71,7 +69,6 @@ class DBTests(unittest.TestCase):
         data = self.db.get_data("nohead")
         self.assertTrue(data.get("content", ""))
         self.assertIn("This markdown file", data.get("content", ""))
-
 
 
 if __name__ == "__main__":
