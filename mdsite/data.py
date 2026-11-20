@@ -1,9 +1,9 @@
 import datetime
 import json
 import os
+import tomllib
 
 import markdown2
-import toml
 import yaml
 from markupsafe import Markup
 
@@ -12,7 +12,7 @@ IN_DATA = 1
 DATA_DONE = 2
 DATA_SEPS = {
     "{": ("}", lambda x: json.loads("{" + x + "}")),
-    "+++": ("+++", toml.loads),
+    "+++": ("+++", tomllib.loads),
     "---": ("---", yaml.safe_load),
 }
 
@@ -72,7 +72,7 @@ class PathConflict(ValueError):
 
 
 CONFIG_FILES = (
-    ("config.toml", toml.loads),
+    ("config.toml", tomllib.loads),
     ("config.yaml", yaml.safe_load),
     ("config.json", json.loads),
 )

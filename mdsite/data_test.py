@@ -19,6 +19,7 @@ class DBTests(unittest.TestCase):
             result["owner"]["dob"].isoformat(),
             datetime.datetime(1979, 5, 27, 7, 32, tzinfo=datetime.UTC).isoformat(),
         )
+        self.assertIs(result["owner"]["dob"].tzinfo, datetime.UTC)
 
     def testParseYAML(self):
         result = self.db.get_data("yaml")
