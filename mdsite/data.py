@@ -19,7 +19,7 @@ DATA_SEPS = {
 
 def _getmtime(path):
     mtime = os.path.getmtime(path)
-    return datetime.datetime.utcfromtimestamp(mtime)
+    return datetime.datetime.fromtimestamp(mtime, tz=datetime.UTC)
 
 
 def _getlisting(dir):

@@ -70,6 +70,17 @@ class DBTests(unittest.TestCase):
         self.assertTrue(data.get("content", ""))
         self.assertIn("This markdown file", data.get("content", ""))
 
+    def testLastModIsAwareUTC(self):
+        for path in ("toml", "nougat"):
+            last_mod = self.db.get_data(path)["last_mod"]
+            self.assertEqual(last_mod.tzinfo, datetime.UTC)
+            fs_path = os.path.join(self.data_dir, path)
+            if not os.path.isdir(fs_path):
+                fs_path += ".md"
+            self.assertAlmostEqual(
+                last_mod.timestamp(), os.path.getmtime(fs_path), delta=1e-6
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
