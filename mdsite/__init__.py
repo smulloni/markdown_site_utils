@@ -1,3 +1,5 @@
-from mdsite.data import PathConflict, DB
+from mdsite.data import DB, PathConflict
 
-version = '0.2.2'
+__all__ = ["DB", "PathConflict"]
+
+version = "0.3.0"

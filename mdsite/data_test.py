@@ -1,5 +1,6 @@
 import datetime
 import os
+import tempfile
 import unittest
 
 from mdsite.data import DB, PathConflict
@@ -17,10 +18,9 @@ class DBTests(unittest.TestCase):
         self.assertEqual(result["owner"]["name"], "Tom Preston-Werner")
         self.assertEqual(
             result["owner"]["dob"].isoformat(),
-            datetime.datetime(
-                1979, 5, 27, 7, 32, tzinfo=datetime.timezone.utc
-            ).isoformat(),
+            datetime.datetime(1979, 5, 27, 7, 32, tzinfo=datetime.UTC).isoformat(),
         )
+        self.assertIs(result["owner"]["dob"].tzinfo, datetime.UTC)
 
     def testParseYAML(self):
         result = self.db.get_data("yaml")
@@ -72,6 +72,32 @@ class DBTests(unittest.TestCase):
         self.assertTrue(data.get("content", ""))
         self.assertIn("This markdown file", data.get("content", ""))
 
+    def testLastModIsAwareUTC(self):
+        for path in ("toml", "nougat"):
+            last_mod = self.db.get_data(path)["last_mod"]
+            self.assertEqual(last_mod.tzinfo, datetime.UTC)
+            fs_path = os.path.join(self.data_dir, path)
+            if not os.path.isdir(fs_path):
+                fs_path += ".md"
+            self.assertAlmostEqual(
+                last_mod.timestamp(), os.path.getmtime(fs_path), delta=1e-6
+            )
+
+    def testDirectoryLastModComesFromIndexFile(self):
+        with tempfile.TemporaryDirectory() as data_dir:
+            leaf_dir = os.path.join(data_dir, "a", "b")
+            os.makedirs(leaf_dir)
+            index_path = os.path.join(leaf_dir, "index.md")
+            with open(index_path, "w") as fp:
+                fp.write("# Leaf\n")
+            # Make the index file and its directory disagree, as they do
+            # when index.md is edited in place.
+            os.utime(index_path, (1_000_000_000, 1_000_000_000))
+            os.utime(leaf_dir, (2_000_000_000, 2_000_000_000))
+            db = DB(data_dir)
+            expected = datetime.datetime.fromtimestamp(1_000_000_000, tz=datetime.UTC)
+            self.assertEqual(db.get_data("/a/b/index")["last_mod"], expected)
+            self.assertEqual(db.get_data("/a/b")["last_mod"], expected)
 
 
 if __name__ == "__main__":

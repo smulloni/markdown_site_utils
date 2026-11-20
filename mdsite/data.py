@@ -1,26 +1,25 @@
-from builtins import object
 import datetime
-import os
 import json
+import os
+import tomllib
 
-from markupsafe import Markup
 import markdown2
 import yaml
-import toml
+from markupsafe import Markup
 
 BEGIN_FILE = 0
 IN_DATA = 1
 DATA_DONE = 2
 DATA_SEPS = {
     "{": ("}", lambda x: json.loads("{" + x + "}")),
-    "+++": ("+++", toml.loads),
+    "+++": ("+++", tomllib.loads),
     "---": ("---", yaml.safe_load),
 }
 
 
 def _getmtime(path):
     mtime = os.path.getmtime(path)
-    return datetime.datetime.utcfromtimestamp(mtime)
+    return datetime.datetime.fromtimestamp(mtime, tz=datetime.UTC)
 
 
 def _getlisting(dir):
@@ -35,13 +34,11 @@ def parse_file(file_path):
     state = BEGIN_FILE
     end_sep = None
     data_parser = None
-    seen_sep = False
     with open(file_path) as fp:
         for line in fp:
             if state == BEGIN_FILE:
                 stripped = line.strip()
                 if stripped in DATA_SEPS:
-                    seen_sep = True
                     state = IN_DATA
                     end_sep, data_parser = DATA_SEPS[stripped]
                 else:
@@ -49,7 +46,7 @@ def parse_file(file_path):
                     content.append(line)
             elif state == IN_DATA:
                 if line.strip() == end_sep:
-                    state = DATA_DONE        
+                    state = DATA_DONE
                 else:
                     raw_data.append(line)
             elif state == DATA_DONE:
@@ -75,13 +72,13 @@ class PathConflict(ValueError):
 
 
 CONFIG_FILES = (
-    ("config.toml", toml.loads),
+    ("config.toml", tomllib.loads),
     ("config.yaml", yaml.safe_load),
     ("config.json", json.loads),
 )
 
 
-class DB(object):
+class DB:
     def __init__(self, data_dir):
         self.data_dir = data_dir
 
@@ -119,13 +116,14 @@ class DB(object):
         path, file_path = self._clean_path(path)
         if os.path.isdir(file_path):
             if os.path.isfile(file_path + ".md"):
-                raise PathConflict(
-                    "path {} is both a file and a directory".format(path)
-                )
+                raise PathConflict(f"path {path} is both a file and a directory")
             if listing is None:
                 listing = _getlisting(file_path)
-            mtime = _getmtime(file_path)
-            file_path = os.path.join(file_path, "index.md")
+            index_path = os.path.join(file_path, "index.md")
+            # Use the index file's mtime, as get_data("<dir>/index") would;
+            # fall back to the directory's mtime if there is no index file.
+            mtime = _getmtime(index_path if os.path.exists(index_path) else file_path)
+            file_path = index_path
         else:
             file_path += ".md"
             if not os.path.exists(file_path):
@@ -138,7 +136,7 @@ class DB(object):
             data["content"] = md_content
         data["listing"] = listing
         data["last_mod"] = mtime
-        data["path"] = "/%s" % path
+        data["path"] = f"/{path}"
         data["id"] = "index" if path == "" else os.path.basename(path)
         return data
 
