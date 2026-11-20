@@ -1,0 +1,73 @@
+name: Release
+
+# Push a tag like v0.4.0 (matching the version in pyproject.toml) to run the
+# full CI suite, build the package, and publish it to PyPI.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - name: Check tag matches package version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          pkg="$(uv version --short)"
+          init="$(sed -n 's/^version = "\(.*\)"$/\1/p' mdsite/__init__.py)"
+          echo "tag=$TAG pyproject=$pkg __init__=$init"
+          if [ "$TAG" != "v$pkg" ] || [ "$init" != "$pkg" ]; then
+            echo "::error::Tag $TAG, pyproject.toml ($pkg) and mdsite/__init__.py ($init) must agree"
+            exit 1
+          fi
+
+  ci:
+    needs: check-version
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    needs: ci
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/markdown-site-utils/${{ github.ref_name }}
+    permissions:
+      id-token: write # for PyPI trusted publishing
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - name: Publish to PyPI
+        run: uv publish --trusted-publishing always
+
+  github-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --title "${TAG#v}" \
+            --generate-notes
