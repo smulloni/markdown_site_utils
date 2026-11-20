@@ -119,8 +119,11 @@ class DB:
                 raise PathConflict(f"path {path} is both a file and a directory")
             if listing is None:
                 listing = _getlisting(file_path)
-            mtime = _getmtime(file_path)
-            file_path = os.path.join(file_path, "index.md")
+            index_path = os.path.join(file_path, "index.md")
+            # Use the index file's mtime, as get_data("<dir>/index") would;
+            # fall back to the directory's mtime if there is no index file.
+            mtime = _getmtime(index_path if os.path.exists(index_path) else file_path)
+            file_path = index_path
         else:
             file_path += ".md"
             if not os.path.exists(file_path):

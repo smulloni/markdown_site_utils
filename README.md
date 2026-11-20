@@ -68,8 +68,10 @@ raised. If nothing exists at the path, an empty dict is returned.
 The returned dict contains the file's metadata, plus these keys:
 
 - `content`: the Markdown rendered to HTML, as a `markupsafe.Markup` string
-- `last_mod`: the modification time of the file (or, for a directory, of the
-  directory itself), as a timezone-aware `datetime` in UTC
+- `last_mod`: the modification time of the Markdown file, as a timezone-aware
+  `datetime` in UTC. For a directory this is the time of its `index.md` (the
+  same value `get_data("/node/leaf/index")` returns), or of the directory
+  itself if it has no `index.md`
 - `path`: the normalized path, with a leading slash
 - `id`: the last component of the path, or `"index"` for the root
 - `listing`: for a directory, a `(subdirectories, pages)` tuple of sorted
@@ -92,6 +94,9 @@ overriding shallower ones.
   `datetime` (one with no timezone) holding the UTC time. Comparing it with a
   naive `datetime` now raises `TypeError`. Compare it with aware datetimes
   instead, such as `datetime.datetime.now(datetime.UTC)`.
+- For a directory, `last_mod` now comes from its `index.md` rather than the
+  directory itself, so editing an index file updates it. It used to change
+  only when entries were added to or removed from the directory.
 - TOML is now parsed with `tomllib` instead of the third-party `toml` package.
   Parse errors are `tomllib.TOMLDecodeError` (still a `ValueError` subclass),
   and offset datetimes in TOML metadata use `datetime.timezone.utc`.

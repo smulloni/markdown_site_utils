@@ -1,5 +1,6 @@
 import datetime
 import os
+import tempfile
 import unittest
 
 from mdsite.data import DB, PathConflict
@@ -81,6 +82,22 @@ class DBTests(unittest.TestCase):
             self.assertAlmostEqual(
                 last_mod.timestamp(), os.path.getmtime(fs_path), delta=1e-6
             )
+
+    def testDirectoryLastModComesFromIndexFile(self):
+        with tempfile.TemporaryDirectory() as data_dir:
+            leaf_dir = os.path.join(data_dir, "a", "b")
+            os.makedirs(leaf_dir)
+            index_path = os.path.join(leaf_dir, "index.md")
+            with open(index_path, "w") as fp:
+                fp.write("# Leaf\n")
+            # Make the index file and its directory disagree, as they do
+            # when index.md is edited in place.
+            os.utime(index_path, (1_000_000_000, 1_000_000_000))
+            os.utime(leaf_dir, (2_000_000_000, 2_000_000_000))
+            db = DB(data_dir)
+            expected = datetime.datetime.fromtimestamp(1_000_000_000, tz=datetime.UTC)
+            self.assertEqual(db.get_data("/a/b/index")["last_mod"], expected)
+            self.assertEqual(db.get_data("/a/b")["last_mod"], expected)
 
 
 if __name__ == "__main__":
